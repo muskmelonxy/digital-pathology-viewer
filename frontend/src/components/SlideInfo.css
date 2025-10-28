@@ -1,0 +1,38 @@
+.slide-info {
+  padding: 16px;
+  background-color: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(15, 30, 60, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.slide-info__description {
+  margin: 0;
+  color: #4c5968;
+  line-height: 1.5;
+}
+
+.slide-info__meta {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.slide-info__label {
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.slide-info__value {
+  color: #4c5968;
+}
+
+.slide-info__extra ul {
+  padding-left: 16px;
+  margin: 0;
+  list-style: disc;
+  color: #4c5968;
+}

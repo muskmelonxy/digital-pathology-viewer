@@ -1,0 +1,14 @@
+.slide-viewer {
+  width: 100%;
+  height: 70vh;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #0f2037;
+  box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.3);
+}
+
+@media (min-height: 900px) {
+  .slide-viewer {
+    height: 80vh;
+  }
+}
