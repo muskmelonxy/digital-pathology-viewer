@@ -5,45 +5,6 @@ import { API_BASE_URL } from '../api/slides';
 import './SlideViewer.css';
 import 'openseadragon/build/openseadragon/openseadragon.css';
 
-const NAV_IMAGES = {
-  zoomIn: {
-    REST: 'https://openseadragon.github.io/openseadragon/images/zoom-in-rest.png',
-    GROUP: 'https://openseadragon.github.io/openseadragon/images/zoom-in-pressed.png',
-    HOVER: 'https://openseadragon.github.io/openseadragon/images/zoom-in-hover.png',
-    DOWN: 'https://openseadragon.github.io/openseadragon/images/zoom-in-pressed.png',
-  },
-  zoomOut: {
-    REST: 'https://openseadragon.github.io/openseadragon/images/zoom-out-rest.png',
-    GROUP: 'https://openseadragon.github.io/openseadragon/images/zoom-out-pressed.png',
-    HOVER: 'https://openseadragon.github.io/openseadragon/images/zoom-out-hover.png',
-    DOWN: 'https://openseadragon.github.io/openseadragon/images/zoom-out-pressed.png',
-  },
-  home: {
-    REST: 'https://openseadragon.github.io/openseadragon/images/home-rest.png',
-    GROUP: 'https://openseadragon.github.io/openseadragon/images/home-pressed.png',
-    HOVER: 'https://openseadragon.github.io/openseadragon/images/home-hover.png',
-    DOWN: 'https://openseadragon.github.io/openseadragon/images/home-pressed.png',
-  },
-  fullpage: {
-    REST: 'https://openseadragon.github.io/openseadragon/images/fullpage-rest.png',
-    GROUP: 'https://openseadragon.github.io/openseadragon/images/fullpage-pressed.png',
-    HOVER: 'https://openseadragon.github.io/openseadragon/images/fullpage-hover.png',
-    DOWN: 'https://openseadragon.github.io/openseadragon/images/fullpage-pressed.png',
-  },
-  previous: {
-    REST: 'https://openseadragon.github.io/openseadragon/images/previous-rest.png',
-    GROUP: 'https://openseadragon.github.io/openseadragon/images/previous-pressed.png',
-    HOVER: 'https://openseadragon.github.io/openseadragon/images/previous-hover.png',
-    DOWN: 'https://openseadragon.github.io/openseadragon/images/previous-pressed.png',
-  },
-  next: {
-    REST: 'https://openseadragon.github.io/openseadragon/images/next-rest.png',
-    GROUP: 'https://openseadragon.github.io/openseadragon/images/next-pressed.png',
-    HOVER: 'https://openseadragon.github.io/openseadragon/images/next-hover.png',
-    DOWN: 'https://openseadragon.github.io/openseadragon/images/next-pressed.png',
-  },
-};
-
 function SlideViewer({ slideId }) {
   const containerRef = useRef(null);
   const viewerRef = useRef(null);
@@ -55,12 +16,11 @@ function SlideViewer({ slideId }) {
 
     viewerRef.current = OpenSeadragon({
       element: containerRef.current,
-      prefixUrl: 'https://openseadragon.github.io/openseadragon/images/',
+      prefixUrl: '//openseadragon.github.io/openseadragon/images/',
       showRotationControl: true,
       showNavigator: true,
       animationTime: 0.9,
       blendTime: 0.5,
-      navImages: NAV_IMAGES,
       gestureSettingsMouse: {
         clickToZoom: true,
         dblClickToZoom: true,
@@ -94,6 +54,26 @@ function SlideViewer({ slideId }) {
 
     // OpenSeadragon can directly use the DZI XML file
     const dziUrl = `${API_BASE_URL}/slides/${slideId}/dzi`;
+    console.log('初始化 OpenSeadragon，切片ID:', slideId);
+    console.log('DZI URL:', dziUrl);
+    
+    // 添加事件监听器用于调试
+    viewerRef.current.addHandler('open', () => {
+      console.log('✓ OpenSeadragon 加载成功');
+    });
+    
+    viewerRef.current.addHandler('open-failed', (event) => {
+      console.error('✗ OpenSeadragon 加载失败:', event);
+    });
+    
+    viewerRef.current.addHandler('tile-loaded', () => {
+      console.log('瓦片加载成功');
+    });
+    
+    viewerRef.current.addHandler('tile-load-failed', (event) => {
+      console.error('瓦片加载失败:', event);
+    });
+    
     viewerRef.current.open(dziUrl);
   }, [slideId]);
 
