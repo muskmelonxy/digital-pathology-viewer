@@ -43,38 +43,36 @@ function SlideViewer({ slideId }) {
   }, []);
 
   useEffect(() => {
-    if (!viewerRef.current) {
-      return;
+    const viewer = viewerRef.current;
+
+    if (!viewer) {
+      return undefined;
     }
 
     if (!slideId) {
-      viewerRef.current.close();
-      return;
+      viewer.close();
+      return undefined;
     }
 
-    // OpenSeadragon can directly use the DZI XML file
     const dziUrl = `${API_BASE_URL}/slides/${slideId}/dzi`;
+    const handleOpen = () => {
+      console.log('✓ OpenSeadragon 加载成功');
+    };
+    const handleOpenFailed = (event) => {
+      console.error('✗ OpenSeadragon 加载失败:', event);
+    };
+
     console.log('初始化 OpenSeadragon，切片ID:', slideId);
     console.log('DZI URL:', dziUrl);
-    
-    // 添加事件监听器用于调试
-    viewerRef.current.addHandler('open', () => {
-      console.log('✓ OpenSeadragon 加载成功');
-    });
-    
-    viewerRef.current.addHandler('open-failed', (event) => {
-      console.error('✗ OpenSeadragon 加载失败:', event);
-    });
-    
-    viewerRef.current.addHandler('tile-loaded', () => {
-      console.log('瓦片加载成功');
-    });
-    
-    viewerRef.current.addHandler('tile-load-failed', (event) => {
-      console.error('瓦片加载失败:', event);
-    });
-    
-    viewerRef.current.open(dziUrl);
+
+    viewer.addHandler('open', handleOpen);
+    viewer.addHandler('open-failed', handleOpenFailed);
+    viewer.open(dziUrl);
+
+    return () => {
+      viewer.removeHandler('open', handleOpen);
+      viewer.removeHandler('open-failed', handleOpenFailed);
+    };
   }, [slideId]);
 
   return <div className="slide-viewer" ref={containerRef} />;
