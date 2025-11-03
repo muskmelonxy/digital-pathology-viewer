@@ -2,13 +2,12 @@ import React, { useEffect, useMemo, useState } from 'react';
 import SlideList from './components/SlideList';
 import SlideViewer from './components/SlideViewer';
 import SlideInfo from './components/SlideInfo';
-import { fetchSlides, fetchSlideDzi } from './api/slides';
+import { fetchSlides } from './api/slides';
 import './App.css';
 
 function App() {
   const [slides, setSlides] = useState([]);
   const [selectedId, setSelectedId] = useState();
-  const [dzi, setDzi] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState();
 
@@ -35,26 +34,6 @@ function App() {
     [slides, selectedId]
   );
 
-  useEffect(() => {
-    async function loadDzi(id) {
-      if (!id) {
-        setDzi(null);
-        return;
-      }
-
-      try {
-        const data = await fetchSlideDzi(id);
-        setDzi(data);
-        setError(undefined);
-      } catch (err) {
-        setError(err.message || '加载 DZI 信息失败');
-        setDzi(null);
-      }
-    }
-
-    loadDzi(selectedId);
-  }, [selectedId]);
-
   const handleSelect = (slide) => {
     setSelectedId(slide.id);
     setError(undefined);
@@ -75,7 +54,7 @@ function App() {
         </aside>
 
         <section className="app__viewer-section">
-          <SlideViewer slideId={selectedId} dzi={dzi} />
+          <SlideViewer slideId={selectedId} />
           <SlideInfo slide={selectedSlide} />
         </section>
       </main>
