@@ -18,6 +18,11 @@ def test_dzi_endpoint():
         response = client.get('/api/slides/999/dzi')
         print(f"Non-existent slide DZI: {response.status_code}")
         assert response.status_code == 404
+
+        # Test .dzi alias
+        response = client.get('/api/slides/999.dzi')
+        print(f"Non-existent slide DZI (.dzi): {response.status_code}")
+        assert response.status_code == 404
         
         # Test DZI endpoint format (we can't test actual slides without data)
         print("✓ DZI endpoint exists and returns proper error for non-existent slides")
@@ -33,6 +38,11 @@ def test_tile_endpoint():
         # Test with .jpeg extension
         response = client.get('/api/slides/999/tiles/0/0/0.jpeg')
         print(f"Non-existent slide tile (jpeg): {response.status_code}")
+        assert response.status_code == 404
+
+        # Test Deep Zoom default path pattern
+        response = client.get('/api/slides/999/dzi_files/0/0_0.jpeg')
+        print(f"Non-existent slide tile (dzi_files): {response.status_code}")
         assert response.status_code == 404
         
         print("✓ Tile endpoints exist and return proper errors for non-existent slides")

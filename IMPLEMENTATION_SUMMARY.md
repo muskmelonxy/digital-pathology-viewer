@@ -8,14 +8,14 @@ The frontend was showing 404 errors when trying to load slide images because the
 ### Key Changes Made
 
 #### Backend (`backend/app.py`)
-1. **DZI Endpoint** (`/api/slides/<id>/dzi`)
+1. **DZI Endpoint** (`/api/slides/<id>/dzi` and `/api/slides/<id>.dzi`)
    - ✅ Returns proper XML format for OpenSeadragon (not JSON)
    - ✅ Uses correct Deep Zoom XML namespace
    - ✅ HTTP caching headers (1 hour)
    - ✅ Error handling for missing slides
 
-2. **Tile Endpoints** (`/api/slides/<id>/tiles/<level>/<col>/<row>`)
-   - ✅ Dual endpoints: with and without `.jpeg` extension
+2. **Tile Endpoints** (`/api/slides/<id>/tiles/<level>/<col>/<row>` and `/api/slides/<id>/dzi_files/<level>/<col>_<row>.jpeg`)
+   - ✅ Multiple endpoints: REST style, optional `.jpeg`, and Deep Zoom `_files`
    - ✅ Returns JPEG format images
    - ✅ RGB conversion for compatibility
    - ✅ HTTP caching headers (1 year)
@@ -78,16 +78,17 @@ The 404 errors mentioned in the ticket should now be resolved. The system will:
 docker-compose up -d
 
 # Test endpoints
-curl http://localhost/api/slides/1/dzi          # Should return XML
-curl http://localhost/api/slides/1/tiles/0/0/0   # Should return JPEG
-curl http://localhost/api/slides/1/info          # Should return JSON
+curl http://localhost/api/slides/1/dzi              # Should return XML
+curl http://localhost/api/slides/1/tiles/0/0/0       # Should return JPEG
+curl http://localhost/api/slides/1/dzi_files/0/0_0.jpeg  # Deep Zoom path
+curl http://localhost/api/slides/1/info              # Should return JSON
 
 # Browser test: Open http://localhost and click on slides
 ```
 
 ## ✅ Verification Criteria Met
 - [x] DZI endpoint returns correct XML format
-- [x] Tile endpoint returns JPEG images  
+- [x] Tile endpoints return JPEG images via REST and Deep Zoom `_files` paths  
 - [x] OpenSeadragon displays slides correctly
 - [x] Smooth zoom and pan functionality
 - [x] No 404 errors in browser console

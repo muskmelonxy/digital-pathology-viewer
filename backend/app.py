@@ -132,6 +132,15 @@ def create_slide():
 
 @app.route("/api/slides/<int:slide_id>/dzi", methods=["GET"])
 def get_slide_dzi(slide_id: int):
+    return _build_dzi_response(slide_id)
+
+
+@app.route("/api/slides/<int:slide_id>.dzi", methods=["GET"])
+def get_slide_dzi_legacy(slide_id: int):
+    return _build_dzi_response(slide_id)
+
+
+def _build_dzi_response(slide_id: int) -> Response:
     session = SessionLocal()
     try:
         slide = session.get(Slide, slide_id)
@@ -143,8 +152,7 @@ def get_slide_dzi(slide_id: int):
     slide_obj, generator = open_slide_resources(slide)
     try:
         width, height = slide_obj.dimensions
-        max_level = generator.level_count - 1
-        
+
         # Generate DZI XML format for OpenSeadragon
         dzi_xml = f'''<?xml version="1.0" encoding="UTF-8"?>
 <Image xmlns="http://schemas.microsoft.com/deepzoom/2008"
@@ -153,9 +161,9 @@ def get_slide_dzi(slide_id: int):
        TileSize="{Config.DEEPZOOM_TILE_SIZE}">
   <Size Width="{width}" Height="{height}"/>
 </Image>'''
-        
-        response = Response(dzi_xml, mimetype='application/xml')
-        response.headers['Cache-Control'] = 'public, max-age=3600'  # Cache for 1 hour
+
+        response = Response(dzi_xml, mimetype="application/xml")
+        response.headers["Cache-Control"] = "public, max-age=3600"  # Cache for 1 hour
         return response
     finally:
         slide_obj.close()
@@ -174,6 +182,14 @@ def get_slide_tile_jpeg(slide_id: int, level: int, col: int, row: int):
     methods=["GET"],
 )
 def get_slide_tile(slide_id: int, level: int, col: int, row: int):
+    return _get_slide_tile(slide_id, level, col, row)
+
+
+@app.route(
+    "/api/slides/<int:slide_id>/dzi_files/<int:level>/<int:col>_<int:row>.jpeg",
+    methods=["GET"],
+)
+def get_slide_tile_dzi_files(slide_id: int, level: int, col: int, row: int):
     return _get_slide_tile(slide_id, level, col, row)
 
 
