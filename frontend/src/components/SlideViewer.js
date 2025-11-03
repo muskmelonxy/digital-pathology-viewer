@@ -44,7 +44,7 @@ const NAV_IMAGES = {
   },
 };
 
-function SlideViewer({ slideId, dzi }) {
+function SlideViewer({ slideId }) {
   const containerRef = useRef(null);
   const viewerRef = useRef(null);
 
@@ -87,42 +87,25 @@ function SlideViewer({ slideId, dzi }) {
       return;
     }
 
-    if (!dzi || !slideId) {
+    if (!slideId) {
       viewerRef.current.close();
       return;
     }
 
-    viewerRef.current.open({
-      width: dzi.width,
-      height: dzi.height,
-      tileWidth: dzi.tile_size,
-      tileHeight: dzi.tile_size,
-      tileOverlap: dzi.tile_overlap,
-      minLevel: dzi.min_level ?? 0,
-      maxLevel: dzi.max_level,
-      getTileUrl: (level, x, y) =>
-        `${API_BASE_URL}/slides/${slideId}/tiles/${level}/${x}/${y}`,
-    });
-  }, [slideId, dzi]);
+    // OpenSeadragon can directly use the DZI XML file
+    const dziUrl = `${API_BASE_URL}/slides/${slideId}/dzi`;
+    viewerRef.current.open(dziUrl);
+  }, [slideId]);
 
   return <div className="slide-viewer" ref={containerRef} />;
 }
 
 SlideViewer.propTypes = {
   slideId: PropTypes.number,
-  dzi: PropTypes.shape({
-    width: PropTypes.number,
-    height: PropTypes.number,
-    tile_size: PropTypes.number,
-    tile_overlap: PropTypes.number,
-    min_level: PropTypes.number,
-    max_level: PropTypes.number,
-  }),
 };
 
 SlideViewer.defaultProps = {
   slideId: undefined,
-  dzi: null,
 };
 
 export default SlideViewer;

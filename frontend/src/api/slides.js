@@ -17,11 +17,6 @@ export async function fetchSlideById(id) {
   return data;
 }
 
-export async function fetchSlideDzi(id) {
-  const { data } = await client.get(`/slides/${id}/dzi`);
-  return data;
-}
-
 export async function createSlide(payload) {
   const { data } = await client.post('/slides', payload);
   return data;

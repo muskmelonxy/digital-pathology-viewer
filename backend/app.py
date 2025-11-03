@@ -1,8 +1,9 @@
 import io
 import logging
+from pathlib import Path
 from typing import Dict, Tuple
 
-from flask import Flask, abort, jsonify, request, send_file
+from flask import Flask, abort, jsonify, request, send_file, Response
 from flask_cors import CORS
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import scoped_session, sessionmaker
@@ -143,19 +144,29 @@ def get_slide_dzi(slide_id: int):
     try:
         width, height = slide_obj.dimensions
         max_level = generator.level_count - 1
-        dzi_payload: Dict[str, Dict[str, int] | int] = {
-            "id": slide.id,
-            "tile_size": Config.DEEPZOOM_TILE_SIZE,
-            "tile_overlap": Config.DEEPZOOM_OVERLAP,
-            "format": "jpeg",
-            "width": width,
-            "height": height,
-            "max_level": max_level,
-            "min_level": 0,
-        }
-        return jsonify(dzi_payload)
+        
+        # Generate DZI XML format for OpenSeadragon
+        dzi_xml = f'''<?xml version="1.0" encoding="UTF-8"?>
+<Image xmlns="http://schemas.microsoft.com/deepzoom/2008"
+       Format="jpeg"
+       Overlap="{Config.DEEPZOOM_OVERLAP}"
+       TileSize="{Config.DEEPZOOM_TILE_SIZE}">
+  <Size Width="{width}" Height="{height}"/>
+</Image>'''
+        
+        response = Response(dzi_xml, mimetype='application/xml')
+        response.headers['Cache-Control'] = 'public, max-age=3600'  # Cache for 1 hour
+        return response
     finally:
         slide_obj.close()
+
+
+@app.route(
+    "/api/slides/<int:slide_id>/tiles/<int:level>/<int:col>/<int:row>.jpeg",
+    methods=["GET"],
+)
+def get_slide_tile_jpeg(slide_id: int, level: int, col: int, row: int):
+    return _get_slide_tile(slide_id, level, col, row)
 
 
 @app.route(
@@ -163,6 +174,10 @@ def get_slide_dzi(slide_id: int):
     methods=["GET"],
 )
 def get_slide_tile(slide_id: int, level: int, col: int, row: int):
+    return _get_slide_tile(slide_id, level, col, row)
+
+
+def _get_slide_tile(slide_id: int, level: int, col: int, row: int):
     session = SessionLocal()
     try:
         slide = session.get(Slide, slide_id)
@@ -183,10 +198,70 @@ def get_slide_tile(slide_id: int, level: int, col: int, row: int):
             abort(404, description="请求的瓦片超出范围")
 
         tile = generator.get_tile(dzi_level, (col, row))
+        # Convert to RGB to ensure JPEG compatibility
+        if tile.mode in ('RGBA', 'LA', 'P'):
+            tile = tile.convert('RGB')
+        
         buffer = io.BytesIO()
-        tile.save(buffer, format="JPEG")
+        tile.save(buffer, format="JPEG", quality=90, optimize=True)
         buffer.seek(0)
-        return send_file(buffer, mimetype="image/jpeg")
+        
+        response = send_file(buffer, mimetype="image/jpeg")
+        response.headers['Cache-Control'] = 'public, max-age=31536000'  # Cache for 1 year
+        # Add ETag for better caching
+        response.headers['ETag'] = f'"{slide_id}-{level}-{col}-{row}"'
+        return response
+    finally:
+        slide_obj.close()
+
+
+@app.route("/api/slides/<int:slide_id>/info", methods=["GET"])
+def get_slide_info(slide_id: int):
+    """Enhanced slide information endpoint with technical details."""
+    session = SessionLocal()
+    try:
+        slide = session.get(Slide, slide_id)
+        if not slide:
+            abort(404, description="切片不存在")
+    finally:
+        session.close()
+
+    slide_obj, generator = open_slide_resources(slide)
+    try:
+        width, height = slide_obj.dimensions
+        max_level = generator.level_count - 1
+        
+        # Get level dimensions for all pyramid levels
+        level_dimensions = []
+        for level in range(generator.level_count):
+            level_dims = generator.level_dimensions[level]
+            level_dimensions.append(list(level_dims))
+        
+        # Get slide properties
+        try:
+            properties = dict(slide_obj.properties)
+        except Exception:
+            properties = {}
+        
+        info = {
+            "id": slide.id,
+            "title": slide.title,
+            "description": slide.description,
+            "file_path": slide.file_path,
+            "dimensions": [width, height],
+            "level_count": generator.level_count,
+            "level_dimensions": level_dimensions,
+            "tile_size": Config.DEEPZOOM_TILE_SIZE,
+            "overlap": Config.DEEPZOOM_OVERLAP,
+            "format": "jpeg",
+            "properties": properties,
+            "metadata": slide.slide_metadata or {},
+            "created_at": slide.created_at.isoformat() if slide.created_at else None,
+        }
+        
+        response = jsonify(info)
+        response.headers['Cache-Control'] = 'public, max-age=300'  # Cache for 5 minutes
+        return response
     finally:
         slide_obj.close()
 
