@@ -8,6 +8,7 @@ This implementation adds the necessary DZI (Deep Zoom Image) and tile service AP
 ### 1. DZI Metadata Endpoint
 ```
 GET /api/slides/<slide_id>/dzi
+GET /api/slides/<slide_id>.dzi
 ```
 
 **Returns**: XML format DZI metadata compatible with OpenSeadragon
@@ -33,12 +34,13 @@ GET /api/slides/<slide_id>/dzi
 ```
 GET /api/slides/<slide_id>/tiles/<level>/<col>/<row>
 GET /api/slides/<slide_id>/tiles/<level>/<col>/<row>.jpeg
+GET /api/slides/<slide_id>/dzi_files/<level>/<col>_<row>.jpeg
 ```
 
 **Returns**: JPEG format image tiles
 
 **Features**:
-- Dual endpoints for compatibility (with and without .jpeg extension)
+- Multiple endpoints for compatibility (REST style, .jpeg extension, Deep Zoom `_files` pattern)
 - RGB conversion for JPEG compatibility
 - HTTP caching headers (1 year cache for tiles)
 - ETag support for better caching
@@ -120,7 +122,7 @@ GET /api/slides/<slide_id>/info
 The implementation uses OpenSeadragon's native DZI support:
 1. Frontend passes DZI XML URL directly to OpenSeadragon
 2. OpenSeadragon automatically parses XML and requests tiles
-3. Tile URLs follow the expected pattern: `/api/slides/{id}/tiles/{level}/{col}/{row}`
+3. Tile URLs follow the expected patterns: REST endpoints (`/api/slides/{id}/tiles/...`) and Deep Zoom `_files` paths (`/api/slides/{id}/dzi_files/{level}/{col}_{row}.jpeg`)
 
 ## Testing
 
@@ -140,6 +142,9 @@ The implementation uses OpenSeadragon's native DZI support:
    ```bash
    curl http://localhost/api/slides/1/tiles/0/0/0 -o test_tile.jpeg
    # Should download a JPEG tile image
+
+   curl http://localhost/api/slides/1/dzi_files/0/0_0.jpeg -o test_tile_dzi.jpeg
+   # Should also download a JPEG tile image using the Deep Zoom path
 
 4. **Test info endpoint**:
    ```bash
@@ -162,7 +167,7 @@ The implementation uses OpenSeadragon's native DZI support:
 ✅ **OpenSeadragon Integration**: Frontend correctly displays slides with zoom/pan
 ✅ **Error Handling**: Proper 404 responses for missing slides/tiles
 ✅ **Performance**: HTTP caching headers implemented
-✅ **Compatibility**: Dual tile endpoints work with and without .jpeg extension
+✅ **Compatibility**: Tile endpoints support REST, `.jpeg` extension, and Deep Zoom `_files` patterns
 ✅ **Enhanced Info**: Detailed slide metadata endpoint available
 
 ## Files Modified
